@@ -5,10 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harikrupa Society - Home</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Typewriter Effect */
+        .typewriter {
+            font-size: 24px;
+            border-right: 3px solid black;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            animation: typing 3s steps(40, end) forwards, blink 0.6s infinite;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+    </style>
 </head>
 <body>
   <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo" />
   <h2>Society Maintenance Payment Status</h2>
+     <p class="typewriter"></p>
+
+    <button class="btn" onclick="goHome()">Home</button>
+
+    <script>
+        function goHome() {
+            window.location.href = "index.html";
+        }
+
+        // Typewriter Effect Script
+        const text = "Please make payment using this QR Code and share payment details to Harikrupa Society Whatsapp Group.";
+        const speed = 50; // Typing speed in milliseconds
+        let i = 0;
+        
+        function typeWriter() {
+            if (i < text.length) {
+                document.querySelector(".typewriter").textContent += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, speed);
+            }
+        }
+
+        // Start typing when the page loads
+        window.onload = typeWriter;
+    </script>
 
   <div>
     <label for="searchHouse">Search by House No.:</label>
