@@ -15,7 +15,7 @@ body {
     }
 
     #logo {
-      max-width: 150px;
+      max-width: 500px;
       margin: 10px auto;
       display: block;
       transition: transform 0.3s ease-in-out;
