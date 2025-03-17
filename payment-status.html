@@ -5,71 +5,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harikrupa Society - Home</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #logo {
-            max-width: 250px;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        #logo:hover {
-            transform: scale(1.1);
-        }
-
-        h1 {
-            font-size: 28px;
-            color: #333;
-        }
-
-        .btn {
-            background-color: #ff4081;
-            color: white;
-            font-size: 20px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .btn:hover {
-            background-color: #d81b60;
-            transform: scale(1.05);
-        }
-    </style>
 </head>
 <body>
+  <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo" />
+  <h2>Society Maintenance Payment Status</h2>
 
-    <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo">
-    <h1>Welcome to Harikrupa Society</h1>
-    <p>Manage your maintenance payments with ease.</p>
+  <div>
+    <label for="searchHouse">Search by House No.:</label>
+    <input type="text" id="searchHouse" placeholder="Enter House No. (e.g., B/07)" />
+    <label for="statusFilter">Filter by Status:</label>
+    <select id="statusFilter">
+      <option value="all">All</option>
+      <option value="paid">Paid</option>
+      <option value="pending">Pending</option>
+    </select>
+    <button id="searchBtn">Search</button>
+  </div>
 
-    <button class="btn" onclick="redirectToPayment()">Payment Status</button>
+  <div id="loading">Fetching data... Please wait.</div>
 
-    <script>
-        function redirectToPayment() {
-            window.location.href = "payment-status.html";
+  <table id="paymentTable">
+    <thead>
+      <tr id="tableHeader"></tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr id="totalAmountRow" style="display: none;">
+        <td colspan="100%">Total Amount: <span id="totalAmount">₹0.00</span></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <img id="qrCode" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/qrcode.jpeg" alt="QR Code for Payment" />
+  <p id="note">Please make payment using this QR Code and share payment details to this mobile: <b>9723151500</b></p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script>
+    // Global Variables
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=484381785&single=true&output=csv";
+    let paymentData = [];
+    let headers = [];
+    let currentSort = { column: null, direction: 'asc' };
+
+    // Fetch Data from Google Sheet
+    async function fetchData() {
+      document.getElementById("loading").style.display = "block";
+      try {
+        const response = await fetch(sheetUrl + "&t=" + new Date().getTime(), { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        const csvData = await response.text();
+        Papa.parse(csvData, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            if (results.data.length === 0) throw new Error("No data found in the sheet!");
+            paymentData = results.data;
+            headers = results.meta.fields;
+            renderTableHeaders();
+            document.getElementById("paymentTable").style.opacity = 1;
+          }
+        });
+      } catch (error) {
+        console.error("Fetch error:", error.message);
+        alert("Failed to load Google Sheet data. Check the sheet URL and permissions.");
+      } finally {
+        document.getElementById("loading").style.display = "none";
+      }
+    }
+
+    // Render Table Headers with Sorting Functionality
+    function renderTableHeaders() {
+      const tableHeader = document.getElementById("tableHeader");
+      tableHeader.innerHTML = "";
+      headers.forEach(header => {
+        const th = document.createElement("th");
+        // Add sort indicator if this is the current sort column
+        if (currentSort.column === header) {
+          th.textContent = header + (currentSort.direction === 'asc' ? " ▲" : " ▼");
+        } else {
+          th.textContent = header;
         }
-    </script>
+        th.style.cursor = "pointer";
+        th.addEventListener("click", function() {
+          if (currentSort.column === header) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.column = header;
+            currentSort.direction = 'asc';
+          }
+          renderTableHeaders();
+          searchData();
+        });
+        tableHeader.appendChild(th);
+      });
+    }
 
+    // Filter, Sort, and Render Table Data
+    function searchData() {
+      const searchInput = document.getElementById("searchHouse").value.trim().toUpperCase();
+      const statusFilter = document.getElementById("statusFilter").value;
+      const tableBody = document.querySelector("#paymentTable tbody");
+      tableBody.innerHTML = "";
+      let totalAmount = 0;
+      
+      // Filter data based on search and status
+      let filteredData = paymentData.filter(entry => {
+        return (!searchInput || entry["House No."].toUpperCase() === searchInput) &&
+               (statusFilter === "all" || entry["Payment Status"].toLowerCase().includes(statusFilter));
+      });
+      
+      // Apply Sorting if set
+      if (currentSort.column) {
+        filteredData.sort((a, b) => {
+          let aVal = a[currentSort.column] || "";
+          let bVal = b[currentSort.column] || "";
+          // Check if both values are numeric (ignoring non-numeric characters)
+          let aNum = parseFloat(aVal.replace(/[^0-9.]/g, ""));
+          let bNum = parseFloat(bVal.replace(/[^0-9.]/g, ""));
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return currentSort.direction === 'asc' ? aNum - bNum : bNum - aNum;
+          } else {
+            // Compare as strings (case insensitive)
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+            if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+          }
+        });
+      }
+      
+      // If no matching records, display a row saying so
+      if (filteredData.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = headers.length;
+        td.textContent = "No records found!";
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+        document.getElementById("totalAmountRow").style.display = "none";
+        return;
+      }
+      
+      // Populate table rows
+      filteredData.forEach(entry => {
+        const tr = document.createElement("tr");
+        tr.className = entry["Payment Status"].toLowerCase().includes("pending") ? "pending-row" : "paid-row";
+        headers.forEach(header => {
+          const td = document.createElement("td");
+          if (header === "Payment Receipt" && entry[header] && entry[header].startsWith("http")) {
+            td.innerHTML = `<a href="${entry[header]}" target="_blank" style="color:blue; text-decoration:underline;">View Receipt</a>`;
+          } else {
+            td.textContent = entry[header] || "-";
+          }
+          tr.appendChild(td);
+          // Sum the amount if header contains "amount"
+          if (header.toLowerCase().includes("amount")) {
+            let value = parseFloat(entry[header].replace(/[^0-9.]/g, ""));
+            if (!isNaN(value)) totalAmount += value;
+          }
+        });
+        tableBody.appendChild(tr);
+      });
+      
+      document.getElementById("totalAmount").textContent = `₹${totalAmount.toFixed(2)}`;
+      document.getElementById("totalAmountRow").style.display = "table-row";
+    }
+
+    // Attach Live Search Listener
+    document.getElementById("searchHouse").addEventListener("keyup", searchData);
+    document.getElementById("statusFilter").addEventListener("change", searchData);
+    document.getElementById("searchBtn").addEventListener("click", searchData);
+
+    // Initial Data Fetch
+    window.addEventListener("load", fetchData);
+  </script>
 </body>
 </html>
