@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harikrupa Society - Members</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        #logo {
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        .btn {
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #loading {
+            font-size: 18px;
+            color: #007BFF;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+   <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo">
+  <h2>Society Member Details</h2>
+
+    <button class="btn" onclick="goHome()">Home</button>
+
+  <div id="loading">Fetching data... Please wait.</div>
+
+  <table id="memberTable">
+    <thead>
+      <tr id="tableHeader"></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+ <script>
+        function goHome() {
+            window.location.href = "index.html";
+        }
+     </script>
+
+  <script>
+    // Global Variables
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=1514554741&single=true&output=csv";
+    let memberData = [];
+    let headers = [];
+
+    // Fetch Data from Google Sheet
+    async function fetchData() {
+      document.getElementById("loading").style.display = "block";
+      try {
+        const response = await fetch(sheetUrl + "&t=" + new Date().getTime(), { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        const csvData = await response.text();
+        Papa.parse(csvData, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            if (results.data.length === 0) throw new Error("No data found in the sheet!");
+            memberData = results.data;
+            headers = results.meta.fields;
+            renderTableHeaders();
+            renderTableData();
+            document.getElementById("memberTable").style.opacity = 1;
+          }
+        });
+      } catch (error) {
+        console.error("Fetch error:", error.message);
+        alert("Failed to load Google Sheet data. Check the sheet URL and permissions.");
+      } finally {
+        document.getElementById("loading").style.display = "none";
+      }
+    }
+
+    // Render Table Headers
+    function renderTableHeaders() {
+      const tableHeader = document.getElementById("tableHeader");
+      tableHeader.innerHTML = headers.map(header => `<th>${header}</th>`).join("");
+    }
+
+    // Render Table Data
+    function renderTableData() {
+      const tableBody = document.querySelector("#memberTable tbody");
+      tableBody.innerHTML = memberData.map(entry => {
+        return `<tr>${headers.map(header => `<td>${entry[header] || "-"}</td>`).join("")}</tr>`;
+      }).join("");
+    }
+
+    // Initial Data Fetch
+    window.addEventListener("load", fetchData);
+  </script>
+</body>
+</html>
