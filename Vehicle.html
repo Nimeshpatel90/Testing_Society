@@ -5,40 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Information</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-    
+   
 </head>
 <body>
-
     <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo">
-    
+    <h2> ॥लोकाः समस्ताः सुखिनो भवन्तु॥    </h2>
     <button class="btn-home" onclick="goHome()">Home</button>
-
     <div class="container mt-4">
         <h2 class="text-center">Vehicle Details</h2>
         <input type="text" id="searchInput" class="search-box" placeholder="Search by any column...">
         
+        <p id="loadingMessage" class="text-center text-primary">Loading data, please wait...</p>
+
         <div class="table-responsive">
-            <table class="table table-bordered table-hover table-striped mt-3" id="carTable">
-                <thead class="table-dark">
-                    <tr id="tableHeader"></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            
+    <table class="table table-bordered table-hover table-striped mt-3" id="carTable">
+        <thead class="table-dark">
+            <tr id="tableHeader"></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
         </div>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
         function goHome() {
             window.location.href = "index.html";
         }
 
-        // ✅ Replace with your actual Google Sheet CSV link
-        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?output=csv&gid=631375361";
+        const sheetGID = "631375361"; // Your actual gid
+        const sheetURL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?output=csv&gid=${sheetGID}`;
 
         async function fetchSheetData() {
             try {
@@ -46,11 +44,11 @@
                 if (!response.ok) throw new Error("Failed to fetch data");
 
                 const data = await response.text();
-
                 Papa.parse(data, {
-                    header: true, // ✅ Treat first row as headers
+                    header: true,
                     skipEmptyLines: true,
                     complete: function (result) {
+                        document.getElementById("loadingMessage").style.display = "none";
                         renderTable(result.data);
                     }
                 });
@@ -69,35 +67,57 @@
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
-            // ✅ Extract headers dynamically
             const headers = Object.keys(rows[0]);
+
             headers.forEach(header => {
                 let th = document.createElement("th");
                 th.textContent = header;
+                th.style.cursor = "pointer";
+                th.addEventListener("click", () => sortTable(header));
                 tableHeader.appendChild(th);
             });
 
-            // ✅ Populate table data dynamically
             rows.forEach(row => {
                 let tr = document.createElement("tr");
                 headers.forEach(header => {
                     let td = document.createElement("td");
-                    td.textContent = row[header] || "-"; // ✅ Handle empty cells
+                    td.textContent = row[header] || "-";
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
             });
         }
 
-        fetchSheetData();
+        function sortTable(column) {
+            const table = document.querySelector("#carTable tbody");
+            const rows = Array.from(table.rows);
+            const index = Array.from(document.querySelectorAll("#tableHeader th")).findIndex(th => th.textContent === column);
+            
+            rows.sort((a, b) => {
+                let valA = a.cells[index].textContent.trim().toLowerCase();
+                let valB = b.cells[index].textContent.trim().toLowerCase();
+                return valA.localeCompare(valB, undefined, { numeric: true });
+            });
+
+            table.innerHTML = "";
+            rows.forEach(row => table.appendChild(row));
+        }
 
         document.getElementById("searchInput").addEventListener("keyup", function () {
             let filter = this.value.toLowerCase();
             let rows = document.querySelectorAll("#carTable tbody tr");
             rows.forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
+                let text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? "" : "none";
+
+                row.querySelectorAll("td").forEach(td => {
+                    let originalText = td.textContent;
+                    td.innerHTML = originalText.replace(new RegExp(filter, "gi"), match => `<mark>${match}</mark>`);
+                });
             });
         });
+
+        fetchSheetData();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -13,7 +13,15 @@ body {
       from { opacity: 0; }
       to { opacity: 1; }
     }
-
+    #carTable {
+      display: table !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+  }
+  
     #logo {
       max-width: 500px;
       margin: 10px auto;
