@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Information</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    
+</head>
+<body>
+
+    <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/main/LOGO.png" alt="Society Logo">
+    
+    <button class="btn-home" onclick="goHome()">Home</button>
+
+    <div class="container mt-4">
+        <h2 class="text-center">Vehicle Details</h2>
+        <input type="text" id="searchInput" class="search-box" placeholder="Search by any column...">
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-striped mt-3" id="carTable">
+                <thead class="table-dark">
+                    <tr id="tableHeader"></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function goHome() {
+            window.location.href = "index.html";
+        }
+
+        // ✅ Replace with your actual Google Sheet CSV link
+        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?output=csv&gid=631375361";
+
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(sheetURL);
+                if (!response.ok) throw new Error("Failed to fetch data");
+
+                const data = await response.text();
+
+                Papa.parse(data, {
+                    header: true, // ✅ Treat first row as headers
+                    skipEmptyLines: true,
+                    complete: function (result) {
+                        renderTable(result.data);
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                alert("Failed to load data. Please check the Google Sheet link!");
+            }
+        }
+
+        function renderTable(rows) {
+            if (rows.length === 0) return;
+
+            const tableHeader = document.getElementById("tableHeader");
+            const tableBody = document.querySelector("#carTable tbody");
+
+            tableHeader.innerHTML = "";
+            tableBody.innerHTML = "";
+
+            // ✅ Extract headers dynamically
+            const headers = Object.keys(rows[0]);
+            headers.forEach(header => {
+                let th = document.createElement("th");
+                th.textContent = header;
+                tableHeader.appendChild(th);
+            });
+
+            // ✅ Populate table data dynamically
+            rows.forEach(row => {
+                let tr = document.createElement("tr");
+                headers.forEach(header => {
+                    let td = document.createElement("td");
+                    td.textContent = row[header] || "-"; // ✅ Handle empty cells
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        fetchSheetData();
+
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            let filter = this.value.toLowerCase();
+            let rows = document.querySelectorAll("#carTable tbody tr");
+            rows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
