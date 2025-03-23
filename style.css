@@ -21,7 +21,11 @@ body {
       width: 100% !important;
       height: auto !important;
   }
-  
+  #carTable th:first-child,
+#carTable td:first-child {
+    display: none;
+}
+
     #logo {
       max-width: 500px;
       margin: 10px auto;

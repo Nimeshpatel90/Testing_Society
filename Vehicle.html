@@ -14,7 +14,7 @@
     <h2> ॥लोकाः समस्ताः सुखिनो भवन्तु॥    </h2>
     <button class="btn-home" onclick="goHome()">Home</button>
     <div class="container mt-4">
-        <h2 class="text-center">Vehicle Details</h2>
+        <h2 class="text-center">Vehicle Information</h2>
         <input type="text" id="searchInput" class="search-box" placeholder="Search by any column...">
         
         <p id="loadingMessage" class="text-center text-primary">Loading data, please wait...</p>
@@ -28,14 +28,22 @@
         <tbody></tbody>
     </table>
         </div>
-    </div>
+        <div class="container mt-4 text-center">
+
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdSeVM-nizhIqLFsoqdDnuW1J1Aif-rxqgAzjm8mHpBRhG39Q/viewform?usp=header" 
+               target="_blank" 
+               class="btn btn-primary">
+                ➕ Add Your Vehicle Information
+            </a>
+        </div>
+        
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
         function goHome() {
             window.location.href = "index.html";
         }
 
-        const sheetGID = "631375361"; // Your actual gid
+        const sheetGID = "177435507"; // Your actual gid
         const sheetURL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?output=csv&gid=${sheetGID}`;
 
         async function fetchSheetData() {
