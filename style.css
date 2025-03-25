@@ -114,7 +114,7 @@ body {
     #loading {
       display: none;
       font-size: 1.2rem;
-      color: blue;
+      color: #ff4d00;
       margin-top: 20px;
     }
 
